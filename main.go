@@ -11,17 +11,15 @@ import (
 
 func main() {
 
-	//	 /countryinfo/v1/info/
+	//	/countryinfo/v1/info/
 	//	/countryinfo/v1/population/
 	//	/countryinfo/v1/status/
 
 	router := http.NewServeMux()
 
 	router.HandleFunc("/countryinfo/v1/info/", countryInfoHandler)
-	//må lage population handler og status handler
-
-	//http.HandleFunc("/countryinfo/v1/population/", populationHandler)
-	//http.HandleFunc("/countryinfo/v1/status/", statusHandler)
+	router.HandleFunc("/countryinfo/v1/population/", populationHandler)
+	router.HandleFunc("/countryinfo/v1/status/", statusHandler)
 
 	//start server on port 8080
 	port := "8080"

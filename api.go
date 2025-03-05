@@ -21,7 +21,6 @@ func fetchCountryInfo(country string) (*CountryInfo, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("Error. Could not fetch country info: %v", err)
-
 	}
 	defer resp.Body.Close()
 
@@ -32,14 +31,15 @@ func fetchCountryInfo(country string) (*CountryInfo, error) {
 
 	//read the body of the response
 	body, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	//	return nil, fmt.Errorf("Error. Could not read response body: %v", err) }
+	if err != nil {
+		return nil, fmt.Errorf("Error. Could not read response body: %v", err)
+	}
 
 	//unmarshal the body into a CountryInfo struct
 	//API returns an array of objects, so we need to unmarshal into a slice of CountryInfo
 	var data []struct {
 		Name       struct{ Common string } `json:"name"`
-		Continents []string                `json:"Continent"`
+		Continents []string                `json:"continents"`
 		Population int                     `json:"population"`
 		Languages  map[string]string       `json:"languages"`
 		Borders    []string                `json:"borders"`
@@ -48,8 +48,39 @@ func fetchCountryInfo(country string) (*CountryInfo, error) {
 		Cities     []string                `json:"cities"`
 	}
 
+	//(should be) safe unmarshal
 	if err := json.Unmarshal(body, &data); err != nil || len(data) == 0 {
 		return nil, fmt.Errorf("Error. Failed to unmarshal response body: %v", err)
+	}
+
+	//menes at det skal skje en "panic" hvis jeg prøver å accesse koden med en data[0]
+	//dermed skal jeg bruke denne if'en for å unngå det
+	if len(data) == 0 {
+		return nil, fmt.Errorf("Error. No country data found for : %s", country)
+	}
+
+	//handling case where continent is an empty string, unknown, safe
+	var continent string
+	if len(data[0].Continents) > 0 {
+		continent = data[0].Continents[0]
+	} else {
+		continent = "Unknown"
+	}
+
+	//handling case where capital is an empty string, unknown, safe
+	var capital string
+	if len(data[0].Capital) > 0 {
+		capital = data[0].Capital[0]
+	} else {
+		capital = "Unknown"
+	}
+
+	//handling case where flag is an empty string, unknown, safe
+	var flag string
+	if data[0].Flag.PNG != "" {
+		flag = data[0].Flag.PNG
+	} else {
+		flag = "Unknown"
 	}
 
 	//convert the data into a CountryInfo struct
@@ -57,26 +88,28 @@ func fetchCountryInfo(country string) (*CountryInfo, error) {
 
 	countryInfo := &CountryInfo{
 		Name:       data[0].Name.Common,
-		Continents: data[0].Continents[0],
+		Continents: continent,
 		Population: data[0].Population,
 		//jeg får også tips om bare "Languages: data[0].Languages"
 		Languages: make([]string, 0, len(data[0].Languages)),
 		Borders:   data[0].Borders,
-		Flag:      data[0].Flag.PNG,
-		Capital:   data[0].Capital[0],
+		Flag:      flag,
+		Capital:   capital,
 	}
 
+	//copy languages into the countryInfo struct
 	for _, lang := range data[0].Languages {
 		countryInfo.Languages = append(countryInfo.Languages, lang)
 	}
 
-	//handle case where capital is an empty string, unknown
-	if len(data[0].Capital) > 0 {
-		countryInfo.Capital = data[0].Capital[0]
-	} else {
-		countryInfo.Capital = "Unknown" //hvia vi ikkw vet hovedstaden
-	}
-
+	/*
+		//handle case where capital is an empty string, unknown
+		if len(data[0].Capital) > 0 {
+			countryInfo.Capital = data[0].Capital[0]
+		} else {
+			countryInfo.Capital = "Unknown" //hvis vi ikke vet hovedstaden
+		}
+	*/
 	return countryInfo, nil
 
 }
@@ -112,7 +145,7 @@ func fetchPopulation(country string) (*PopulationData, error) {
 			Yearly  []struct {
 				Year  int `json:"year"`
 				Value int `json:"value"`
-			} `json:"Population"`
+			} `json:"population"`
 		} `json:"data"`
 	}
 

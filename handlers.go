@@ -2,17 +2,18 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"strings"
 )
 
 func countryInfoHandler(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Printf("You have requested URL: %s\n", r.URL.Path)
+	log.Printf("You have requested URL: %s\n", r.URL.Path)
 
 	//extract country name from the URL
-	countryName := strings.TrimSpace(r.URL.Path[len("/countryinfo/v1/info/"):])
+	countryName := strings.TrimPrefix(r.URL.Path, "/countryinfo/v1/info/")
+	countryName = strings.TrimSpace(countryName)
 	if countryName == "" {
 		http.Error(w, "Missing country code", http.StatusBadRequest)
 		return
@@ -62,11 +63,57 @@ func countryInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 
 	*/
-	w.Header().Set("Conent-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(country)
 
 }
 
-func countryPopulationHandler(w http.ResponseWriter, r *http.Request) {
+// populationHandler for requests
 
+func populationHandler(w http.ResponseWriter, r *http.Request) {
+
+	log.Printf("You have requested URL: %s\n", r.URL.Path)
+	/*
+		pathParts := strings.Split(r.URL.Path, "/")
+
+		if len(pathParts) < 3 || pathParts[1] != "population" {
+			http.Error(w, "Invalid URL", http.StatusBadRequest)
+			return
+		}
+
+	*/
+
+	countryName := strings.TrimPrefix(r.URL.Path, "/countryinfo/v1/population/")
+	countryName = strings.TrimSpace(countryName)
+	if countryName == "" {
+		http.Error(w, "Missing country code", http.StatusBadRequest)
+		return
+	}
+
+	//fetch population data
+	population, err := fetchPopulation(countryName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	/*	countryName := pathParts[2]
+		population, err := fetchPopulation(countryName)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+	*/
+
+	//send json response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(population)
+}
+
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Status check requested")
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
