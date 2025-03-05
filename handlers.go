@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func countryInfoHandler(w http.ResponseWriter, r *http.Request) {
@@ -114,6 +115,11 @@ func populationHandler(w http.ResponseWriter, r *http.Request) {
 func statusHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Status check requested")
 
+	response := map[string]string{
+		"status":    "ok",
+		"timestamp": time.Now().Format(time.RFC3339),
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	json.NewEncoder(w).Encode(response)
 }
