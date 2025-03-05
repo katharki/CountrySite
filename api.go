@@ -15,6 +15,8 @@ const (
 	countriesNowAPI = "http://129.241.150.113:3500/api/v0.1/countries/population"
 )
 
+//coyntryInfo struct
+
 // code string
 func fetchCountryInfo(country string) (*CountryInfo, error) {
 	url := fmt.Sprintf("%s%s", restCountriesAPI, country)
