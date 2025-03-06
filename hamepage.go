@@ -36,4 +36,6 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 	</body>
 	</html>
 	`)
+
+	//random linje
 }
