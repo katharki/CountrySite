@@ -38,4 +38,5 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 	`)
 
 	//random linje
+	//random linje2
 }
