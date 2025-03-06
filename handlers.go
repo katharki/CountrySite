@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var starTime = time.Now()
+
 func countryInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("You have requested URL: %s\n", r.URL.Path)
@@ -26,6 +28,16 @@ func countryInfoHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Country not found:(", http.StatusNotFound)
 		return
 	}
+
+	/*
+		limit := 0
+
+		queryLimit := r.URL.Query().Get("limit")
+		if queryLimit != "" {
+			if
+		}
+
+	*/
 
 	//extract country code from the URL
 

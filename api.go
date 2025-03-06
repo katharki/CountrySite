@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 )
 
 // APIResponse - represents the response from the status endpoint API
@@ -85,6 +86,17 @@ func fetchCountryInfo(country string) (*CountryInfo, error) {
 		flag = "Unknown"
 	}
 
+	//sort cities, aphabetically
+	sort.Strings(data[0].Cities)
+
+	//limit on cities, doest work, dont need
+	/*
+		if limit > 0 && limit < len(data[0].Cities) {
+			data[0].Cities = data[0].Cities[:limit]
+		}
+
+	*/
+
 	//convert the data into a CountryInfo struct
 	//we only need the first element of the array
 
@@ -97,6 +109,7 @@ func fetchCountryInfo(country string) (*CountryInfo, error) {
 		Borders:   data[0].Borders,
 		Flag:      flag,
 		Capital:   capital,
+		Cities:    data[0].Cities,
 	}
 
 	//copy languages into the countryInfo struct

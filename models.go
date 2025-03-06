@@ -28,9 +28,7 @@ type APIResponse struct {
 	CountriesNowAPI  string `json:"countriesNowAPI"`
 	RestCountriesAPI string `json:"restCountriesAPI"`
 	Version          string `json:"version"`
-	Uptime           string `json:"uptime"
-
-`
+	Uptime           string `json:"uptime"`
 }
 
 var countries = map[string]*CountryInfo{
