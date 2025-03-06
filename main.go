@@ -17,6 +17,9 @@ func main() {
 
 	router := http.NewServeMux()
 
+	//homepage
+	router.HandleFunc("/", homepage)
+
 	router.HandleFunc("/countryinfo/v1/info/", countryInfoHandler)
 	router.HandleFunc("/countryinfo/v1/population/", populationHandler)
 	router.HandleFunc("/countryinfo/v1/status/", statusHandler)

@@ -84,15 +84,15 @@ func populationHandler(w http.ResponseWriter, r *http.Request) {
 
 	*/
 
-	countryName := strings.TrimPrefix(r.URL.Path, "/countryinfo/v1/population/")
-	countryName = strings.TrimSpace(countryName)
-	if countryName == "" {
+	countryCode := strings.TrimPrefix(r.URL.Path, "/countryinfo/v1/population/")
+	countryCode = strings.TrimSpace(countryCode)
+	if countryCode == "" {
 		http.Error(w, "Missing country code", http.StatusBadRequest)
 		return
 	}
 
 	//fetch population data
-	population, err := fetchPopulation(countryName)
+	population, err := fetchPopulation(countryCode)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -115,6 +115,7 @@ func populationHandler(w http.ResponseWriter, r *http.Request) {
 func statusHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Status check requested")
 
+	//send json response
 	response := map[string]string{
 		"status":    "ok",
 		"timestamp": time.Now().Format(time.RFC3339),

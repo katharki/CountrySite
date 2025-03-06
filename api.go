@@ -126,19 +126,19 @@ func fetchPopulation(country string) (*PopulationData, error) {
 	resp, err := http.Get(url)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error. Couldn't fetching population info: %v", err)
+		return nil, fmt.Errorf("Error. Couldn't fetching population info for %s: %v", country, err)
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Error. Unexpected status code: %v", resp.StatusCode)
+		return nil, fmt.Errorf("Error. Unexpected status code %d for country %s: %v", resp.StatusCode, country)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error. Could not read response body: %v", err)
+		return nil, fmt.Errorf("Error. Could not read response body for %s: %v", country, err)
 	}
 
 	var result struct {
@@ -147,12 +147,12 @@ func fetchPopulation(country string) (*PopulationData, error) {
 			Yearly  []struct {
 				Year  int `json:"year"`
 				Value int `json:"value"`
-			} `json:"population"`
+			} `json:"yearly"`
 		} `json:"data"`
 	}
 
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("Error. Failed to unmarshal response body: %v", err)
+		return nil, fmt.Errorf("Error. Failed to unmarshal response body %s: %v", country, err)
 	}
 
 	//compute mean population
@@ -163,7 +163,7 @@ func fetchPopulation(country string) (*PopulationData, error) {
 	}
 	mean := 0
 	if count > 0 {
-		mean = total / count
+		mean = int(float64(total) / float64(count))
 	}
 
 	populationData := &PopulationData{
