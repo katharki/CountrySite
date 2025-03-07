@@ -4,7 +4,7 @@ package main
 
 type CountryInfo struct {
 	Name       string   `json:"name"`
-	Continents string   `json:"continent"`
+	Continents string   `json:"continents"`
 	Population int      `json:"population"`
 	Languages  []string `json:"languages"`
 	Borders    []string `json:"borders"`
@@ -31,6 +31,7 @@ type APIResponse struct {
 	Uptime           string `json:"uptime"`
 }
 
+/*
 var countries = map[string]*CountryInfo{
 	"NO": &CountryInfo{
 		Name:       "Norway",
@@ -53,3 +54,4 @@ var countries = map[string]*CountryInfo{
 		Cities:     []string{"Gothenburg", "Malmö", "Uppsala"},
 	},
 }
+*/

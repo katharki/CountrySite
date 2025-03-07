@@ -73,11 +73,11 @@ func fetchCountryInfo(countryCode string) (*CountryInfo, error) {
 	}
 
 	//handling case where continent is an empty string, unknown, safe
-	var continent string
+	var continents string
 	if len(data[0].Continents) > 0 {
-		continent = data[0].Continents[0]
+		continents = data[0].Continents[0]
 	} else {
-		continent = "Unknown"
+		continents = "Unknown"
 	}
 
 	//handling case where capital is an empty string, unknown, safe
@@ -112,7 +112,7 @@ func fetchCountryInfo(countryCode string) (*CountryInfo, error) {
 
 	countryInfo := &CountryInfo{
 		Name:       data[0].Name.Common,
-		Continents: continent,
+		Continents: continents,
 		Population: data[0].Population,
 		//jeg får også tips om bare "Languages: data[0].Languages"
 		Languages: make([]string, 0, len(data[0].Languages)),
