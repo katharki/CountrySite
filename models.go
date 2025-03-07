@@ -32,6 +32,7 @@ type APIResponse struct {
 }
 
 /*
+//hardcoded data for countries. removed because they are going to be fetched from the API
 var countries = map[string]*CountryInfo{
 	"NO": &CountryInfo{
 		Name:       "Norway",

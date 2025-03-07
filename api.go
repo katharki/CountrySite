@@ -144,7 +144,7 @@ func fetchCountryInfo(countryCode string) (*CountryInfo, error) {
 //HER SKAL VI FETCHE POPULATION FRA COUNTRIESNOWAPI
 //DET ER HER ER DA EN EGEN DEL FRA RESTEN. slik at jeg vet og husker :p
 
-func fetchPopulation(countryCode string) (*PopulationData, error) {
+func fetchPopulation(countryCode string, startYear, endYear int) (*PopulationData, error) {
 
 	countryCode = strings.ToUpper(countryCode)
 
@@ -162,7 +162,6 @@ func fetchPopulation(countryCode string) (*PopulationData, error) {
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
-
 	if err != nil {
 		return nil, fmt.Errorf("Error. Could not read response body for %s: %v", countryCode, err)
 	}
@@ -183,12 +182,28 @@ func fetchPopulation(countryCode string) (*PopulationData, error) {
 		return nil, fmt.Errorf("Error. Failed to unmarshal response body %s: %v", countryCode, err)
 	}
 
+	//filter data based on start and end year
+	var filteredYears []struct {
+		Year  int `json:"year"`
+		Value int `json:"value"`
+	}
+
 	//compute mean population
 	total, count := 0, 0
-	for _, p := range result.Data.Yearly {
+	for _, entry := range result.Data.Yearly {
+		if (startYear == 0 && endYear == 0) || (entry.Year >= startYear && entry.Year <= endYear) {
+			filteredYears = append(filteredYears, entry)
+			total += entry.Value
+			count++
+		}
+	}
+
+	/*for _, p := range result.Data.Yearly {
 		total += p.Value
 		count++
 	}
+
+	*/
 	mean := 0
 	if count > 0 {
 		mean = int(float64(total) / float64(count))

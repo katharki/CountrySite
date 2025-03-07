@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -117,8 +118,15 @@ func populationHandler(w http.ResponseWriter, r *http.Request) {
 
 	countryCode = strings.ToUpper(countryCode)
 
+	//extract the limit query parameter
+	startYear, endYear := 0, 0 //default return all years
+	limitParameter := r.URL.Query().Get("limit")
+	if limitParameter != "" {
+		fmt.Sscanf(limitParameter, "%d-%d", &startYear, &endYear)
+	}
+
 	//fetch population data
-	population, err := fetchPopulation(countryCode)
+	population, err := fetchPopulation(countryCode, startYear, endYear)
 	if err != nil {
 		log.Printf("ERROR: Failed ot fetch popualation data for %s: %v", countryCode, err)
 		http.Error(w, "Could not retrieve population data", http.StatusNotFound)
