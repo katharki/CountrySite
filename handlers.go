@@ -15,16 +15,25 @@ func countryInfoHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("You have requested URL: %s\n", r.URL.Path)
 
 	//extract country name from the URL
-	countryName := strings.TrimPrefix(r.URL.Path, "/countryinfo/v1/info/")
-	countryName = strings.TrimSpace(countryName)
-	if countryName == "" {
+	countryCode := strings.TrimPrefix(r.URL.Path, "/countryinfo/v1/info/")
+	countryCode = strings.TrimSpace(countryCode)
+
+	if countryCode == "" {
 		http.Error(w, "Missing country code", http.StatusBadRequest)
 		return
 	}
 
+	if len(countryCode) != 2 {
+		http.Error(w, "Invalid country code. Use a 2-letter ISO code, please", http.StatusBadRequest)
+		return
+	}
+
+	countryCode = strings.ToUpper(countryCode)
+
 	// fetch country info
-	country, err := fetchCountryInfo(countryName)
+	country, err := fetchCountryInfo(countryCode)
 	if err != nil {
+		log.Printf("ERROR: Failed to fetch country info for %s: %v", countryCode, err)
 		http.Error(w, "Country not found:(", http.StatusNotFound)
 		return
 	}
@@ -76,6 +85,8 @@ func countryInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 
 	*/
+
+	//sned json response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(country)
 
@@ -98,15 +109,19 @@ func populationHandler(w http.ResponseWriter, r *http.Request) {
 
 	countryCode := strings.TrimPrefix(r.URL.Path, "/countryinfo/v1/population/")
 	countryCode = strings.TrimSpace(countryCode)
-	if countryCode == "" {
-		http.Error(w, "Missing country code", http.StatusBadRequest)
+
+	if countryCode == "" || len(countryCode) != 2 {
+		http.Error(w, "Invalid country code. Use a 2-letter ISO code, please", http.StatusBadRequest)
 		return
 	}
+
+	countryCode = strings.ToUpper(countryCode)
 
 	//fetch population data
 	population, err := fetchPopulation(countryCode)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		log.Printf("ERROR: Failed ot fetch popualation data for %s: %v", countryCode, err)
+		http.Error(w, "Could not retrieve population data", http.StatusNotFound)
 		return
 	}
 
@@ -127,12 +142,30 @@ func populationHandler(w http.ResponseWriter, r *http.Request) {
 func statusHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Status check requested")
 
+	countriesNowResp, _ := http.Get(countriesNowAPI)
+	restCountriesResp, _ := http.Get(restCountriesAPI + "no")
+
 	//send json response
-	response := map[string]string{
-		"status":    "ok",
-		"timestamp": time.Now().Format(time.RFC3339),
+	statusResponse := map[string]string{
+		"status":           "ok",
+		"timestamp":        time.Now().Format(time.RFC3339),
+		"countriesNowAPI":  countriesNowResp.Status,
+		"restCountriesAPI": restCountriesResp.Status,
+		"uptime":           time.Since(starTime).String(),
+	}
+
+	if countriesNowResp != nil {
+		statusResponse["countriesNowAPI"] = countriesNowResp.Status
+	} else {
+		statusResponse["countriesNowAPI"] = "error"
+	}
+
+	if restCountriesResp != nil {
+		statusResponse["restCountriesAPI"] = restCountriesResp.Status
+	} else {
+		statusResponse["restCountriesAPI"] = "error"
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(statusResponse)
 }

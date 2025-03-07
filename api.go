@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"strings"
 )
 
 // APIResponse - represents the response from the status endpoint API
@@ -19,8 +20,11 @@ const (
 //coyntryInfo struct
 
 // code string
-func fetchCountryInfo(country string) (*CountryInfo, error) {
-	url := fmt.Sprintf("%s%s", restCountriesAPI, country)
+func fetchCountryInfo(countryCode string) (*CountryInfo, error) {
+
+	countryCode = strings.ToUpper(countryCode)
+
+	url := fmt.Sprintf("%s%s", restCountriesAPI, countryCode)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("Error. Could not fetch country info: %v", err)
@@ -38,6 +42,8 @@ func fetchCountryInfo(country string) (*CountryInfo, error) {
 		return nil, fmt.Errorf("Error. Could not read response body: %v", err)
 	}
 
+	fmt.Println("DEBUG: Raw API response: ", string(body))
+
 	//unmarshal the body into a CountryInfo struct
 	//API returns an array of objects, so we need to unmarshal into a slice of CountryInfo
 	var data []struct {
@@ -53,13 +59,17 @@ func fetchCountryInfo(country string) (*CountryInfo, error) {
 
 	//(should be) safe unmarshal
 	if err := json.Unmarshal(body, &data); err != nil || len(data) == 0 {
+		fmt.Println("DEBUG: Raw API resposme before parsing error:", string(body))
+		fmt.Println("DEBUG: Failed to parse API response for:", countryCode)
 		return nil, fmt.Errorf("Error. Failed to unmarshal response body: %v", err)
 	}
 
 	//menes at det skal skje en "panic" hvis jeg prøver å accesse koden med en data[0]
 	//dermed skal jeg bruke denne if'en for å unngå det
 	if len(data) == 0 {
-		return nil, fmt.Errorf("Error. No country data found for : %s", country)
+		fmt.Println("DEBUG: Empty response from API for country: ", countryCode)
+		return nil, fmt.Errorf("Error. No country data found for : %s", countryCode)
+
 	}
 
 	//handling case where continent is an empty string, unknown, safe
@@ -134,24 +144,27 @@ func fetchCountryInfo(country string) (*CountryInfo, error) {
 //HER SKAL VI FETCHE POPULATION FRA COUNTRIESNOWAPI
 //DET ER HER ER DA EN EGEN DEL FRA RESTEN. slik at jeg vet og husker :p
 
-func fetchPopulation(country string) (*PopulationData, error) {
-	url := fmt.Sprintf("%s?country=%s", countriesNowAPI, country)
+func fetchPopulation(countryCode string) (*PopulationData, error) {
+
+	countryCode = strings.ToUpper(countryCode)
+
+	url := fmt.Sprintf("%s?country=%s", countriesNowAPI, countryCode)
 	resp, err := http.Get(url)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error. Couldn't fetching population info for %s: %v", country, err)
+		return nil, fmt.Errorf("Error. Couldn't fetching population info for %s: %v", countryCode, err)
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Error. Unexpected status code %d for country %s: %v", resp.StatusCode, country)
+		return nil, fmt.Errorf("Error. Unexpected status code %d for country %s: %v", resp.StatusCode, countryCode)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error. Could not read response body for %s: %v", country, err)
+		return nil, fmt.Errorf("Error. Could not read response body for %s: %v", countryCode, err)
 	}
 
 	var result struct {
@@ -165,7 +178,9 @@ func fetchPopulation(country string) (*PopulationData, error) {
 	}
 
 	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, fmt.Errorf("Error. Failed to unmarshal response body %s: %v", country, err)
+		fmt.Println("DEBUG: Rawy API population response before parsing error:", string(body))
+		fmt.Println("DEBUG: Failed to parse API response for:", countryCode)
+		return nil, fmt.Errorf("Error. Failed to unmarshal response body %s: %v", countryCode, err)
 	}
 
 	//compute mean population
