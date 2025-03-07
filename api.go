@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -42,8 +43,6 @@ func fetchCountryInfo(countryCode string) (*CountryInfo, error) {
 		return nil, fmt.Errorf("Error. Could not read response body: %v", err)
 	}
 
-	fmt.Println("DEBUG: Raw API response: ", string(body))
-
 	//unmarshal the body into a CountryInfo struct
 	//API returns an array of objects, so we need to unmarshal into a slice of CountryInfo
 	var data []struct {
@@ -57,17 +56,24 @@ func fetchCountryInfo(countryCode string) (*CountryInfo, error) {
 		Cities     []string                `json:"cities"`
 	}
 
+	/*if err != nil || len(data) == 0 {
+		log.Printf("DEBUG: Raw API response %s: %s", countryCode, string(body))
+		//fmt.Println("DEBUG: Raw API response: ", string(body))
+	}
+
+	*/
+
 	//(should be) safe unmarshal
 	if err := json.Unmarshal(body, &data); err != nil || len(data) == 0 {
-		fmt.Println("DEBUG: Raw API resposme before parsing error:", string(body))
-		fmt.Println("DEBUG: Failed to parse API response for:", countryCode)
+		log.Printf("DEBUG: Raw API response %s: %s", string(body)) //log only on failiure
+		log.Printf("DEBUG: Failed to parse API response for:", countryCode)
 		return nil, fmt.Errorf("Error. Failed to unmarshal response body: %v", err)
 	}
 
 	//menes at det skal skje en "panic" hvis jeg prøver å accesse koden med en data[0]
 	//dermed skal jeg bruke denne if'en for å unngå det
 	if len(data) == 0 {
-		fmt.Println("DEBUG: Empty response from API for country: ", countryCode)
+		log.Printf("DEBUG: Empty response from API for country: %s", countryCode)
 		return nil, fmt.Errorf("Error. No country data found for : %s", countryCode)
 
 	}
@@ -96,8 +102,12 @@ func fetchCountryInfo(countryCode string) (*CountryInfo, error) {
 		flag = "Unknown"
 	}
 
-	//sort cities, aphabetically
-	sort.Strings(data[0].Cities)
+	if data[0].Cities == nil {
+		data[0].Cities = []string{"Unknown"}
+	} else {
+		//sort cities, aphabetically
+		sort.Strings(data[0].Cities)
+	}
 
 	//limit on cities, doest work, dont need
 	/*
@@ -154,7 +164,6 @@ func fetchPopulation(countryCode string, startYear, endYear int) (*PopulationDat
 	if err != nil {
 		return nil, fmt.Errorf("Error. Couldn't fetching population info for %s: %v", countryCode, err)
 	}
-
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
@@ -168,31 +177,35 @@ func fetchPopulation(countryCode string, startYear, endYear int) (*PopulationDat
 
 	var result struct {
 		Data struct {
-			Country string `json:"country"`
-			Yearly  []struct {
-				Year  int `json:"year"`
-				Value int `json:"value"`
-			} `json:"yearly"`
+			Country string             `json:"country"`
+			Yearly  []YearlyPopulation `json:"yearly"`
 		} `json:"data"`
 	}
 
-	if err := json.Unmarshal(body, &result); err != nil {
-		fmt.Println("DEBUG: Rawy API population response before parsing error:", string(body))
+	err = json.Unmarshal(body, &result)
+	if err != nil {
 		fmt.Println("DEBUG: Failed to parse API response for:", countryCode)
+		fmt.Printf("DEBUG: Raw API population response before parsing error for %s: %s\n", countryCode, string(body))
 		return nil, fmt.Errorf("Error. Failed to unmarshal response body %s: %v", countryCode, err)
 	}
 
-	//filter data based on start and end year
-	var filteredYears []struct {
-		Year  int `json:"year"`
-		Value int `json:"value"`
+	// check if the response contains data
+	if len(result.Data.Yearly) == 0 {
+		fmt.Println("DEBUG: No population data found for:", countryCode)
+		return nil, fmt.Errorf("Error. No population data found for: %s", countryCode)
 	}
+
+	//filter data based on start and end year
+	var filteredYears []YearlyPopulation
 
 	//compute mean population
 	total, count := 0, 0
 	for _, entry := range result.Data.Yearly {
 		if (startYear == 0 && endYear == 0) || (entry.Year >= startYear && entry.Year <= endYear) {
-			filteredYears = append(filteredYears, entry)
+			filteredYears = append(filteredYears, YearlyPopulation{
+				Year:  entry.Year,
+				Value: entry.Value,
+			})
 			total += entry.Value
 			count++
 		}
@@ -212,7 +225,7 @@ func fetchPopulation(countryCode string, startYear, endYear int) (*PopulationDat
 	populationData := &PopulationData{
 		Country: result.Data.Country,
 		Mean:    mean,
-		Yearly:  result.Data.Yearly,
+		Yearly:  filteredYears,
 	}
 
 	return populationData, nil

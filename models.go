@@ -31,6 +31,11 @@ type APIResponse struct {
 	Uptime           string `json:"uptime"`
 }
 
+type YearlyPopulation struct {
+	Year  int `json:"year"`
+	Value int `json:"value"`
+}
+
 /*
 //hardcoded data for countries. removed because they are going to be fetched from the API
 var countries = map[string]*CountryInfo{

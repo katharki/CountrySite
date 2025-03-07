@@ -150,8 +150,9 @@ func populationHandler(w http.ResponseWriter, r *http.Request) {
 func statusHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Status check requested")
 
-	countriesNowResp, _ := http.Get(countriesNowAPI)
-	restCountriesResp, _ := http.Get(restCountriesAPI + "no")
+	//try to fetch data from the APIs
+	countriesNowResp, err1 := http.Get(countriesNowAPI)
+	restCountriesResp, err2 := http.Get(restCountriesAPI + "no")
 
 	//send json response
 	statusResponse := map[string]string{
@@ -162,16 +163,20 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 		"uptime":           time.Since(starTime).String(),
 	}
 
-	if countriesNowResp != nil {
-		statusResponse["countriesNowAPI"] = countriesNowResp.Status
+	//handle countries now api
+	if err1 != nil || countriesNowResp == nil {
+		statusResponse["countriesNowAPI"] = "Error"
 	} else {
-		statusResponse["countriesNowAPI"] = "error"
+		statusResponse["countriesNowAPI"] = countriesNowResp.Status
+		defer countriesNowResp.Body.Close()
 	}
 
-	if restCountriesResp != nil {
-		statusResponse["restCountriesAPI"] = restCountriesResp.Status
+	//handle restcountreis api
+	if err2 != nil || restCountriesResp == nil {
+		statusResponse["restCountriesAPI"] = "Error"
 	} else {
-		statusResponse["restCountriesAPI"] = "error"
+		statusResponse["restCountriesAPI"] = restCountriesResp.Status
+		defer restCountriesResp.Body.Close()
 	}
 
 	w.Header().Set("Content-Type", "application/json")
