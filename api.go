@@ -202,10 +202,7 @@ func fetchPopulation(countryCode string, startYear, endYear int) (*PopulationDat
 	total, count := 0, 0
 	for _, entry := range result.Data.Yearly {
 		if (startYear == 0 && endYear == 0) || (entry.Year >= startYear && entry.Year <= endYear) {
-			filteredYears = append(filteredYears, YearlyPopulation{
-				Year:  entry.Year,
-				Value: entry.Value,
-			})
+			filteredYears = append(filteredYears, entry)
 			total += entry.Value
 			count++
 		}

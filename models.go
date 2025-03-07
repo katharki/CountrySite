@@ -15,12 +15,9 @@ type CountryInfo struct {
 
 // PopulationData - represents data for population history data
 type PopulationData struct {
-	Country string `json:"country"`
-	Mean    int    `json:"mean"`
-	Yearly  []struct {
-		Year  int `json:"year"`
-		Value int `json:"value"`
-	} `json:"yearly"`
+	Country string             `json:"country"`
+	Mean    int                `json:"mean"`
+	Yearly  []YearlyPopulation `json:"yearly"`
 }
 
 // APIResponse - represents the response from the status endpoint API
